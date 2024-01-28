@@ -9,7 +9,7 @@ class ToDoList extends StatefulWidget {
 
 class _ToDoListState extends State<ToDoList> {
   final List<String> _todoList = [];
-  final TextEditingController _textFieldController = TextEditingController();
+  TextEditingController _textFieldController = TextEditingController();
 
   void _addToDoItem(String task) {
     setState(() {
@@ -18,37 +18,67 @@ class _ToDoListState extends State<ToDoList> {
     _textFieldController.clear();
   }
 
+  void _deleteToDoItem(int index) {
+    setState(() {
+      _todoList.removeAt(index);
+    });
+  }
+
+  void _editToDoItem(int index) {
+    setState(() {
+      _todoList[index] = _textFieldController.text;
+    });
+    _textFieldController.clear();
+  }
+
   Widget _buildToDoList() {
     return ListView.builder(
       itemCount: _todoList.length,
       itemBuilder: (context, index) {
-        return _buildToDoItem(_todoList[index]);
+        return _buildToDoItem(_todoList[index], index);
       },
     );
   }
 
-  Widget _buildToDoItem(String title) {
+  Widget _buildToDoItem(String title, int index) {
     return ListTile(
-      title: Text(title),
+      tileColor: Colors.blue,
+      title: Text(
+        title,
+        style: const TextStyle(fontSize: 22),
+      ),
+      onTap: () {
+        _displayDialog(context, index);
+      },
+      trailing: IconButton(
+        icon: const Icon(Icons.delete_outline),
+        onPressed: () => _deleteToDoItem(index),
+      ),
     );
   }
 
-  Future<void> _displayDialog(BuildContext context) async {
+  Future<void> _displayDialog(BuildContext context, int? index) async {
+    _textFieldController =
+        TextEditingController(text: index == null ? '' : _todoList[index]);
     showDialog<AlertDialog>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Todoを追加'),
+          title: Text(index == null ? 'Todoを追加' : 'Todoを編集'),
           content: TextField(
             controller: _textFieldController,
             decoration: const InputDecoration(hintText: 'ここに入力'),
           ),
           actions: <Widget>[
             ElevatedButton(
-              child: const Text('Add'),
+              child: Text(index == null ? 'Add' : 'Edit'),
               onPressed: () {
-                _addToDoItem(_textFieldController.text);
-                Navigator.of(context).pop();
+                if (index == null) {
+                  _addToDoItem(_textFieldController.text);
+                } else {
+                  _editToDoItem(index);
+                }
+                Navigator.pop(context);
               },
             ),
           ],
@@ -65,7 +95,7 @@ class _ToDoListState extends State<ToDoList> {
       ),
       body: _buildToDoList(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _displayDialog(context),
+        onPressed: () => _displayDialog(context, null),
         tooltip: 'Add Item',
         child: const Icon(Icons.add),
       ),
